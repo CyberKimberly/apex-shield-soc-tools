@@ -152,4 +152,19 @@ foreach ($user in $users) {
     Add-Content -Path $reportFile -Value $line
 }
 
-Write-Host "[+] User accounts collected: $($users.Count) total."             
+Write-Host "[+] User accounts collected: $($users.Count) total."   
+
+# --- Report Complete ---
+$footer = @"
+
+========================================================
+  Report complete.
+  File: $reportFile
+========================================================
+"@
+Add-Content -Path $reportFile -Value $footer
+
+Write-Host ""
+Write-Host "[+] Security report complete." -ForegroundColor Green
+Write-Host "[+] Report saved to: $reportFile"
+Write-Host ""
