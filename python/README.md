@@ -26,3 +26,19 @@ Make sure `sample_auth.log` is in the same directory as the script.
 ### Note
 
 `sample_auth.log` contains fictional test data for demonstration purposes.
+
+### Sample Output
+
+```
+SUMMARY
+------------------------------
+Total failed login attempts: 11
+Unique source IPs: 4
+
+TOP SOURCE IP ADDRESSES
+------------------------------
+  192.168.40.10          4 attempts  <-- INVESTIGATE
+  185.220.101.42         4 attempts  <-- INVESTIGATE
+  10.0.0.55              1 attempts
+  192.168.1.200          1 attempts
+```
