@@ -106,3 +106,50 @@ if ($stoppedAuto) {
     Add-Content -Path $reportFile -Value "  All auto-start services are running. OK."
     Write-Host "[+] All auto-start services running."
 }
+
+# --- Section 4: User Accounts ---
+$role = (Get-CimInstance Win32_ComputerSystem).DomainRole
+$isDC = $role -ge 4
+
+if ($isDC) {
+    Write-Section "DOMAIN USER ACCOUNTS (Domain Controller)"
+    Write-Host "[*] Domain controller detected - collecting AD user accounts..."
+
+    $users = @(Get-ADUser -Filter * -Properties LastLogonDate, PasswordNeverExpires, 'msDS-UserPasswordExpiryTimeComputed' |
+        Sort-Object SamAccountName |
+        ForEach-Object {
+            $raw = $_.'msDS-UserPasswordExpiryTimeComputed'
+            $expiry = if ($_.PasswordNeverExpires -or -not $raw -or $raw -eq [long]::MaxValue) { $null } else { [datetime]::FromFileTime($raw) }
+            [PSCustomObject]@{
+                Name            = $_.SamAccountName
+                Enabled         = $_.Enabled
+                LastLogon       = $_.LastLogonDate
+                PasswordExpires = $expiry
+     }
+        })
+} else {
+    Write-Section "LOCAL USER ACCOUNTS"
+    Write-Host "[*] Collecting local user accounts..."
+
+    $users = @(Get-LocalUser | Sort-Object Name |
+        Select-Object Name, Enabled, LastLogon, PasswordExpires)
+}
+
+$enabledCount  = ($users | Where-Object {$_.Enabled}).Count
+$disabledCount = ($users | Where-Object {-not $_.Enabled}).Count
+
+Add-Content -Path $reportFile -Value "  Total accounts : $($users.Count)"
+Add-Content -Path $reportFile -Value "  Enabled        : $enabledCount"
+Add-Content -Path $reportFile -Value "  Disabled       : $disabledCount"
+Add-Content -Path $reportFile -Value ""
+
+foreach ($user in $users) {
+    $status     = if ($user.Enabled) { "ENABLED " } else { "DISABLED" }
+    $lastLogon  = if ($user.LastLogon) { $user.LastLogon.ToString("yyyy-MM-dd") } else { "Never" }
+    $pwdExpires = if ($user.PasswordExpires) { $user.PasswordExpires.ToString("yyyy-MM-dd") } else { "Never" }
+
+    $line = "  [{0}]  {1,-20}  Last Logon: {2,-12}  Pwd Expires: {3}" -f $status, $user.Name, $lastLogon, $pwdExpires
+    Add-Content -Path $reportFile -Value $line
+}
+
+Write-Host "[+] User accounts collected: $($users.Count) total."             
