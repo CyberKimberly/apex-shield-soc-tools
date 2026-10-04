@@ -18,7 +18,8 @@ failed login attempts, and generates a formatted report.
 
 ```bash
 cd python
-python3 log_analyzer.py
+python3 log_analyzer.py # analyzes sample_auth.log
+python3 log_analyzer.py /path/to/auth.log  # analyzes any log file
 ```
 
 Make sure `sample_auth.log` is in the same directory as the script.

@@ -4,12 +4,14 @@
 # Reads an authentication log file, identifies failed login attempts,
 # and generates a formatted analysis report.
 #
-# Usage: python3 log_analyzer.py
+# Usage: python3 log_analyzer.py [logfile]
+#        (defaults to sample_auth.log if no file is given)
 # Output: analysis_report.txt
 
 import re                       # Regular expressions -- for IP address extraction
 from collections import Counter  # Counter -- for counting IP occurrences
 from datetime import datetime   # datetime -- for timestamping the report
+import sys                      # sys -- for reading command-line arguments
 
 
 def read_log_file(filepath):
@@ -78,7 +80,7 @@ def extract_ip_addresses(lines):
     return all_ips
 
 
-def generate_report(failed_logins, ip_counts, output_file):
+def generate_report(failed_logins, ip_counts, output_file, log_file):
     """
     Write a formatted analysis report to a text file.
 
@@ -86,6 +88,7 @@ def generate_report(failed_logins, ip_counts, output_file):
         failed_logins (list): All failed login log lines
         ip_counts (Counter): IP addresses and their failure counts
         output_file (str): Path where the report should be saved
+        log_file (str): Name of the log file that was analyzed
 
     Returns:
         None (creates the report file as a side effect)
@@ -99,7 +102,7 @@ def generate_report(failed_logins, ip_counts, output_file):
         f.write("  APEX SHIELD SOC -- FAILED LOGIN ANALYSIS REPORT\n")
         f.write("=" * 55 + "\n")
         f.write(f"  Generated: {timestamp}\n")
-        f.write(f"  Log File:  sample_auth.log\n")
+        f.write(f"  Log File:  {log_file}\n")
         f.write("=" * 55 + "\n\n")
 
         # Summary section
@@ -130,8 +133,12 @@ def main():
     Main execution function.
     Orchestrates the log analysis workflow.
     """
-    # Configuration -- change these to analyze different files
-    log_file = "sample_auth.log"
+    # Configuration -- use the filename from the command line if one was
+    # given, otherwise fall back to the default sample log
+    if len(sys.argv) > 1:
+        log_file = sys.argv[1]
+    else:
+        log_file = "sample_auth.log"
     output_file = "analysis_report.txt"
 
     print("\n" + "=" * 55)
@@ -167,7 +174,7 @@ def main():
 
     # Step 5: Generate the report
     print(f"\n[*] Writing report to: {output_file}")
-    generate_report(failed, ip_counts, output_file)
+    generate_report(failed, ip_counts, output_file, log_file)
 
     print("\n[+] Analysis complete.")
     print("=" * 55 + "\n")
