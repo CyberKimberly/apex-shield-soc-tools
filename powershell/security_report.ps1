@@ -83,7 +83,7 @@ Add-Content -Path $reportFile -Value "  Total running services: $serviceCount"
 Add-Content -Path $reportFile -Value ""
 
 foreach ($svc in $services) {
-    $line = "  {0,-35} [{1}]" -f $svc.DisplayName, $svc.StartMode
+    $line = "  {0,-45} [{1}]" -f $svc.DisplayName, $svc.StartMode
     Add-Content -Path $reportFile -Value $line
 }
 
