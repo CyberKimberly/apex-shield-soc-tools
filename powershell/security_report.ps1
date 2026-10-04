@@ -67,3 +67,42 @@ Get-CimInstance Win32_LogicalDisk |
     }
 
 Write-Host "[+] Disk space collected."
+
+# --- Section 2: Running Services ---
+Write-Section "RUNNING SERVICES"
+
+Write-Host "[*] Collecting running services..."
+
+$services = Get-CimInstance Win32_Service |
+    Where-Object {$_.State -eq "Running"} |
+    Sort-Object DisplayName |
+    Select-Object Name, DisplayName, StartMode, State
+
+$serviceCount = ($services | Measure-Object).Count
+Add-Content -Path $reportFile -Value "  Total running services: $serviceCount"
+Add-Content -Path $reportFile -Value ""
+
+foreach ($svc in $services) {
+    $line = "  {0,-35} [{1}]" -f $svc.DisplayName, $svc.StartMode
+    Add-Content -Path $reportFile -Value $line
+}
+
+Write-Host "[+] Services collected: $serviceCount running."
+
+# --- Section 3: Auto-Start Services That Are Stopped (Security Flag) ---
+Write-Section "AUTO-START SERVICES CURRENTLY STOPPED"
+
+$stoppedAuto = Get-CimInstance Win32_Service |
+    Where-Object {$_.StartMode -eq "Auto" -and $_.State -eq "Stopped"} |
+    Sort-Object DisplayName
+
+if ($stoppedAuto) {
+    Add-Content -Path $reportFile -Value "  *** These services are set to auto-start but are stopped: ***"
+    foreach ($svc in $stoppedAuto) {
+        Add-Content -Path $reportFile -Value "    - $($svc.DisplayName)"
+    }
+    Write-Host "[!] Found $($stoppedAuto.Count) auto-start services that are stopped." -ForegroundColor Yellow
+} else {
+    Add-Content -Path $reportFile -Value "  All auto-start services are running. OK."
+    Write-Host "[+] All auto-start services running."
+}
