@@ -12,6 +12,41 @@ import re                       # Regular expressions -- for IP address extracti
 from collections import Counter  # Counter -- for counting IP occurrences
 from datetime import datetime   # datetime -- for timestamping the report
 import sys                      # sys -- for reading command-line arguments
+import argparse 
+import os 
+
+def parse_arguments():
+    """ 
+        Parse command-line arguments.
+
+        Usage: python3 log_analyzer.py [log_file] [--output report.txt] [--verbose]
+    """
+    parser = argparse.ArgumentParser(
+        description ="Apex Shield SOC Log Analyzer -- Detect failed login patterns",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Example: python3 log_analyzer.py auth.log --output report.txt"
+    ) 
+
+    parser.add_argument(
+        "log_file",
+        nargs="?",
+        default="sample_auth.log",
+        help="Path to the log file to analyze (default: sample_auth.log)"
+    )
+
+    parser.add_argument(
+        "--output", "-o",
+        default="analysis_report.txt",
+        help="Output report file path (default: analysis_report.txt)"
+    )
+
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",            #flag: True if present, False is absent
+        help="Show detailed output including all failed login entries"
+    )
+
+    return parser.parse_args()
 
 
 def read_log_file(filepath):
@@ -129,55 +164,43 @@ def generate_report(failed_logins, ip_counts, output_file, log_file):
 
 
 def main():
-    """
-    Main execution function.
-    Orchestrates the log analysis workflow.
-    """
-    # Configuration -- use the filename from the command line if one was
-    # given, otherwise fall back to the default sample log
-    if len(sys.argv) > 1:
-        log_file = sys.argv[1]
-    else:
-        log_file = "sample_auth.log"
-    output_file = "analysis_report.txt"
+    """Main execution function using command-line arguments."""
+    args = parse_arguments()
 
-    print("\n" + "=" * 55)
-    print("  APEX SHIELD -- LOG ANALYZER")
-    print("=" * 55)
+    log_file    = args.log_file
+    output_file = args.output
+    verbose     = args.verbose
 
-    # Step 1: Load the log file
-    print(f"\n[*] Reading log file: {log_file}")
+    # Validate input file exists
+    if not os.path.isfile(log_file):
+        print(f"[!] Error: File not found: {log_file}")
+        print(f"[!] Usage: python3 log_analyzer.py [log_file]")
+        return
+
+    print(f"\n[*] Log file: {log_file}")
+    print(f"[*] Output:   {output_file}")
+
     lines = read_log_file(log_file)
-
-    if not lines:                               # If the list is empty (file not found)
+    if not lines:
         print("[!] No log data loaded. Exiting.")
-        return                                  # Exit main() early
+        return
 
-    print(f"[+] Loaded {len(lines)} log entries.")
-
-    # Step 2: Find failed logins
-    print("\n[*] Scanning for failed login attempts...")
     failed = find_failed_logins(lines)
-    print(f"[+] Found {len(failed)} failed login attempts.")
-
-    # Step 3: Extract IP addresses
-    print("\n[*] Extracting source IP addresses...")
-    ips = extract_ip_addresses(failed)
+    ips    = extract_ip_addresses(failed)
     ip_counts = Counter(ips)
-    print(f"[+] Found {len(ip_counts)} unique source IP addresses.")
 
-    # Step 4: Show summary to terminal
-    print("\n[*] Top source IPs:")
+    if verbose:
+        print(f"\n[*] All failed login entries ({len(failed)}):")
+        for entry in failed:
+            print(f"    {entry}")
+
+    print(f"\n[*] Top IPs:")
     for ip, count in ip_counts.most_common(5):
-        flag = "  <-- INVESTIGATE" if count >= 3 else ""
+        flag = " <-- INVESTIGATE" if count >= 3 else ""
         print(f"    {ip:<20} {count:>3} failures{flag}")
 
-    # Step 5: Generate the report
-    print(f"\n[*] Writing report to: {output_file}")
-    generate_report(failed, ip_counts, output_file, log_file)
-
-    print("\n[+] Analysis complete.")
-    print("=" * 55 + "\n")
+    generate_report(failed_logins=failed, ip_counts=ip_counts, output_file=output_file, log_file=log_file)
+    print(f"\n[+] Report: {output_file}\n")
 
 
 # This block runs main() when the script is executed directly
