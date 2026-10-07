@@ -8,15 +8,16 @@
 #        (defaults to sample_auth.log if no file is given)
 # Output: analysis_report.txt
 
-import re                       # Regular expressions -- for IP address extraction
-from collections import Counter  # Counter -- for counting IP occurrences
-from datetime import datetime   # datetime -- for timestamping the report
-import sys                      # sys -- for reading command-line arguments
-import argparse 
-import os 
+import re                          # Regular expressions -- for IP address extraction
+from collections import Counter    # Counter -- for counting IP occurrences
+from datetime import datetime      # datetime -- for timestamping the report
+import sys                         # sys -- for reading command-line arguments
+import argparse
+import os
+import statistics                  # statistics -- mean/stdev for anomaly detection
 
 def parse_arguments():
-    """ 
+    """
         Parse command-line arguments.
 
         Usage: python3 log_analyzer.py [log_file] [--output report.txt] [--verbose]
@@ -25,7 +26,7 @@ def parse_arguments():
         description ="Apex Shield SOC Log Analyzer -- Detect failed login patterns",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Example: python3 log_analyzer.py auth.log --output report.txt"
-    ) 
+    )
 
     parser.add_argument(
         "log_file",
@@ -115,6 +116,40 @@ def extract_ip_addresses(lines):
     return all_ips
 
 
+def flag_anomalies(ip_counts, z_threshold=2.0):
+    """
+    Identify IP addresses whose failure count is statistically unusual
+    compared to the overall distribution.
+
+    Uses Z-score: how many standard deviations a value is from the mean.
+    A Z-score above z_threshold indicates a statistical outlier.
+
+    Parameters:
+        ip_counts (Counter): IP addresses and their failure counts
+        z_threshold (float): Z-score cutoff for flagging (default: 2.0)
+
+    Returns:
+        list: Tuples of (ip, count, z_score) for anomalous IPs
+    """
+    if len(ip_counts) < 2:
+        return []   # Need at least 2 data points for statistics
+
+    counts = list(ip_counts.values())   # Just the numbers
+    mean   = statistics.mean(counts)
+    stdev  = statistics.stdev(counts)   # Sample standard deviation
+
+    if stdev == 0:
+        return []   # All counts are equal: no anomaly possible
+
+    anomalies = []
+    for ip, count in ip_counts.items():
+        z_score = (count - mean) / stdev
+        if z_score > z_threshold:
+            anomalies.append((ip, count, round(z_score, 2)))
+
+    return sorted(anomalies, key=lambda x: x[2], reverse=True)
+
+
 def generate_report(failed_logins, ip_counts, output_file, log_file):
     """
     Write a formatted analysis report to a text file.
@@ -126,7 +161,7 @@ def generate_report(failed_logins, ip_counts, output_file, log_file):
         log_file (str): Name of the log file that was analyzed
 
     Returns:
-        None (creates the report file as a side effect)
+         None (creates the report file as a side effect)
     """
     # Get current timestamp for the report header
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -153,6 +188,18 @@ def generate_report(failed_logins, ip_counts, output_file, log_file):
             # Flag IPs with 3 or more attempts
             flag = "  <-- INVESTIGATE" if count >= 3 else ""
             f.write(f"  {ip:<20} {count:>3} attempts{flag}\n")
+
+        # Statistical anomaly section
+        f.write("\nSTATISTICAL ANOMALY DETECTION (Z-score > 2.0)\n")
+        f.write("-" * 30 + "\n")
+        anomalies = flag_anomalies(ip_counts)
+        if anomalies:
+            for ip, count, z_score in anomalies:
+                f.write(f"  {ip:<20} {count:>3} attempts  Z={z_score}  <-- OUTLIER\n")
+        else:
+            f.write(f"  No statistically unusual IPs ({len(ip_counts)} IPs analyzed).\n")
+            if len(ip_counts) < 6:
+                f.write("  Note: fewer than 6 IPs; Z > 2.0 is not reachable at this sample size.\n")
 
         # Full failed login log
         f.write("\n\nFULL FAILED LOGIN LOG\n")
@@ -198,6 +245,14 @@ def main():
     for ip, count in ip_counts.most_common(5):
         flag = " <-- INVESTIGATE" if count >= 3 else ""
         print(f"    {ip:<20} {count:>3} failures{flag}")
+
+    print(f"\n[*] Statistical anomalies (Z > 2.0):")
+    anomalies = flag_anomalies(ip_counts)
+    if anomalies:
+        for ip, count, z_score in anomalies:
+            print(f"    {ip:<20} {count:>3} failures  Z={z_score} <-- OUTLIER")
+    else:
+        print(f"    None detected ({len(ip_counts)} IPs analyzed)")
 
     generate_report(failed_logins=failed, ip_counts=ip_counts, output_file=output_file, log_file=log_file)
     print(f"\n[+] Report: {output_file}\n")
