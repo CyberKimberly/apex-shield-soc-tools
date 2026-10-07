@@ -13,16 +13,21 @@ failed login attempts, and generates a formatted report.
 - Counts and ranks IPs by number of failed attempts
 - Flags IPs with 3 or more failures for investigation
 - Writes a formatted analysis report to `analysis_report.txt`
+- Accepts command-line options for input file, output file, and verbose mode
+- Validates that the log file exists before processing
 
 ### Usage
 
 ```bash
 cd python
-python3 log_analyzer.py # analyzes sample_auth.log
-python3 log_analyzer.py /path/to/auth.log  # analyzes any log file
+python3 log_analyzer.py                              # analyze sample_auth.log (default)
+python3 log_analyzer.py /path/to/auth.log            # analyze any log file
+python3 log_analyzer.py auth.log -o my_report.txt    # save report to a custom file
+python3 log_analyzer.py -v                           # verbose: list every failed login
+python3 log_analyzer.py --help                       # show all options
 ```
 
-Make sure `sample_auth.log` is in the same directory as the script.
+If the log file doesn't exist, the script prints a clear error and exits without processing.
 
 ### Note
 
