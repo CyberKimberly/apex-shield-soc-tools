@@ -62,6 +62,12 @@ def read_log_file(filepath):
     """
     Read a log file and return all lines as a list of strings.
     Returns an empty list and prints an error if the file cannot be read.
+
+    Parameters:
+        filepath (str): Path to the log file
+
+    Returns:
+        list: Non-empty lines with whitespace stripped
     """
     lines = []
     try:
