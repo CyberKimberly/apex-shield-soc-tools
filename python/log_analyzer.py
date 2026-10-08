@@ -156,13 +156,13 @@ def flag_anomalies(ip_counts, z_threshold=Z_THRESHOLD):
     if stdev == 0:
         return []   # All counts are equal: no anomaly possible
 
-    anomalies = []
-    for ip, count in ip_counts.items():
-        z_score = (count - mean) / stdev
-        if z_score > z_threshold:
-            anomalies.append((ip, count, round(z_score, 2)))
+    anomalies = []                                      # Collect (ip, count, z_score) tuples
+    for ip, count in ip_counts.items():                 # Score every IP
+        z_score = (count - mean) / stdev                # Std devs above (+) or below (-) the average
+        if z_score > z_threshold:                       # High outliers only; few failures isn't a threat
+            anomalies.append((ip, count, round(z_score, 2)))   # Round for readable output
 
-    return sorted(anomalies, key=lambda x: x[2], reverse=True)
+    return sorted(anomalies, key=lambda x: x[2], reverse=True)  # Most anomalous first
 
 
 def generate_report(failed_logins, ip_counts, output_file, log_file):
