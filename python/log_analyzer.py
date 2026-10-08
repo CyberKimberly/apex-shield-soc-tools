@@ -98,11 +98,12 @@ def find_failed_logins(lines):
     Returns:
         list: Only the lines that represent failed logins
     """
-    failed = []
-    for line in lines:
+    failed = []                                 # Collect matching lines here
+    for line in lines:                          # Check every log line
+        # "Failed" matches sshd; lowercase check catches PAM/sudo variants
         if "Failed" in line or "authentication failure" in line.lower():
-            failed.append(line)
-    return failed
+            failed.append(line)                 # Keep the whole line for IP extraction later
+    return failed                               # Only failed-login lines go to the next step
 
 
 def extract_ip_addresses(lines):
