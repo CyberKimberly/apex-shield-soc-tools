@@ -15,7 +15,9 @@ import sys                         # sys -- exit codes on error
 import argparse                    # argparse -- command-line argument parsing
 import os                          # os -- file existence checks
 import statistics                  # statistics -- mean/stdev for anomaly detection
-
+# --- Detection thresholds ---
+Z_THRESHOLD = 2.0              # Z-score cutoff for statistical outliers
+INVESTIGATE_THRESHOLD = 3      # Failed attempts that trigger an INVESTIGATE flag
 def parse_arguments():
     """
         Parse command-line arguments.
@@ -111,12 +113,12 @@ def extract_ip_addresses(lines):
     all_ips = []
     for line in lines:
         matches = ip_pattern.findall(line)   # Returns a list of all matches in the line
-        all_ips.extend(matches)              # sys -- exit codes on error
+        all_ips.extend(matches)              # extend adds each item, not the list as one item
 
     return all_ips
 
 
-def flag_anomalies(ip_counts, z_threshold=2.0):
+def flag_anomalies(ip_counts, z_threshold=Z_THRESHOLD):
     """
     Identify IP addresses whose failure count is statistically unusual
     compared to the overall distribution.
@@ -126,7 +128,7 @@ def flag_anomalies(ip_counts, z_threshold=2.0):
 
     Parameters:
         ip_counts (Counter): IP addresses and their failure counts
-        z_threshold (float): Z-score cutoff for flagging (default: 2.0)
+        z_threshold (float): Z-score cutoff for flagging (default: Z_THRESHOLD)
 
     Returns:
         list: Tuples of (ip, count, z_score) for anomalous IPs
@@ -185,12 +187,12 @@ def generate_report(failed_logins, ip_counts, output_file, log_file):
         f.write("TOP SOURCE IP ADDRESSES\n")
         f.write("-" * 30 + "\n")
         for ip, count in ip_counts.most_common():
-            # Flag IPs with 3 or more attempts
-            flag = "  <-- INVESTIGATE" if count >= 3 else ""
+            # Flag IPs at or above INVESTIGATE_THRESHOLD
+            flag = "  <-- INVESTIGATE" if count >= INVESTIGATE_THRESHOLD else ""
             f.write(f"  {ip:<20} {count:>3} attempts{flag}\n")
 
         # Statistical anomaly section
-        f.write("\nSTATISTICAL ANOMALY DETECTION (Z-score > 2.0)\n")
+        f.write(f"\nSTATISTICAL ANOMALY DETECTION (Z-score > {Z_THRESHOLD})\n")
         f.write("-" * 30 + "\n")
         anomalies = flag_anomalies(ip_counts)
         if anomalies:
@@ -199,7 +201,7 @@ def generate_report(failed_logins, ip_counts, output_file, log_file):
         else:
             f.write(f"  No statistically unusual IPs ({len(ip_counts)} IPs analyzed).\n")
             if len(ip_counts) < 6:
-                f.write("  Note: fewer than 6 IPs; Z > 2.0 is not reachable at this sample size.\n")
+               f.write(f"  Note: fewer than 6 IPs; Z > {Z_THRESHOLD} is not reachable at this sample size.\n")
 
         # Full failed login log
         f.write("\n\nFULL FAILED LOGIN LOG\n")
@@ -243,10 +245,10 @@ def main():
 
     print(f"\n[*] Top IPs:")
     for ip, count in ip_counts.most_common(5):
-        flag = " <-- INVESTIGATE" if count >= 3 else ""
+        flag = " <-- INVESTIGATE" if count >= INVESTIGATE_THRESHOLD else ""
         print(f"    {ip:<20} {count:>3} failures{flag}")
 
-    print(f"\n[*] Statistical anomalies (Z > 2.0):")
+    print(f"\n[*] Statistical anomalies (Z > {Z_THRESHOLD}):")
     anomalies = flag_anomalies(ip_counts)
     if anomalies:
         for ip, count, z_score in anomalies:
