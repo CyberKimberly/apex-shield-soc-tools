@@ -4,16 +4,16 @@
 # Reads an authentication log file, identifies failed login attempts,
 # and generates a formatted analysis report.
 #
-# Usage: python3 log_analyzer.py [logfile]
-#        (defaults to sample_auth.log if no file is given)
-# Output: analysis_report.txt
+# Usage: python3 log_analyzer.py [log_file] [--output FILE] [--verbose]
+#        log_file defaults to sample_auth.log if not given
+# Output: analysis_report.txt (or the path given with --output)
 
 import re                          # Regular expressions -- for IP address extraction
 from collections import Counter    # Counter -- for counting IP occurrences
 from datetime import datetime      # datetime -- for timestamping the report
-import sys                         # sys -- for reading command-line arguments
-import argparse
-import os
+import sys                         # sys -- exit codes on error
+import argparse                    # argparse -- command-line argument parsing
+import os                          # os -- file existence checks
 import statistics                  # statistics -- mean/stdev for anomaly detection
 
 def parse_arguments():
@@ -23,7 +23,7 @@ def parse_arguments():
         Usage: python3 log_analyzer.py [log_file] [--output report.txt] [--verbose]
     """
     parser = argparse.ArgumentParser(
-        description ="Apex Shield SOC Log Analyzer -- Detect failed login patterns",
+        description="Apex Shield SOC Log Analyzer -- Detect failed login patterns",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="Example: python3 log_analyzer.py auth.log --output report.txt"
     )
@@ -111,7 +111,7 @@ def extract_ip_addresses(lines):
     all_ips = []
     for line in lines:
         matches = ip_pattern.findall(line)   # Returns a list of all matches in the line
-        all_ips.extend(matches)              # extend adds each item, not the list as one item
+        all_ips.extend(matches)              # sys -- exit codes on error
 
     return all_ips
 
@@ -221,16 +221,16 @@ def main():
     # Validate input file exists
     if not os.path.isfile(log_file):
         print(f"[!] Error: File not found: {log_file}")
-        print(f"[!] Usage: python3 log_analyzer.py [log_file]")
-        return
-
+        print("[!] Run with --help for usage.")
+        sys.exit(1)                # Non-zero exit code signals failure to the shell 
+    
     print(f"\n[*] Log file: {log_file}")
     print(f"[*] Output:   {output_file}")
 
     lines = read_log_file(log_file)
     if not lines:
         print("[!] No log data loaded. Exiting.")
-        return
+        sys.exit(1)
 
     failed = find_failed_logins(lines)
     ips    = extract_ip_addresses(failed)
@@ -255,7 +255,7 @@ def main():
         print(f"    None detected ({len(ip_counts)} IPs analyzed)")
 
     generate_report(failed_logins=failed, ip_counts=ip_counts, output_file=output_file, log_file=log_file)
-    print(f"\n[+] Report: {output_file}\n")
+    
 
 
 # This block runs main() when the script is executed directly
