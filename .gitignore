@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Generated reports (sample_output.txt is the committed example)
+*_report.txt
