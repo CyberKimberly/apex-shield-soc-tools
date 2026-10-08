@@ -15,14 +15,20 @@ import sys                         # sys -- exit codes on error
 import argparse                    # argparse -- command-line argument parsing
 import os                          # os -- file existence checks
 import statistics                  # statistics -- mean/stdev for anomaly detection
+
 # --- Detection thresholds ---
 Z_THRESHOLD = 2.0              # Z-score cutoff for statistical outliers
 INVESTIGATE_THRESHOLD = 3      # Failed attempts that trigger an INVESTIGATE flag
+
+
 def parse_arguments():
     """
         Parse command-line arguments.
 
         Usage: python3 log_analyzer.py [log_file] [--output report.txt] [--verbose]
+
+        Returns:
+            argparse.Namespace: Parsed arguments (log_file, output, verbose)
     """
     parser = argparse.ArgumentParser(
         description="Apex Shield SOC Log Analyzer -- Detect failed login patterns",
@@ -213,7 +219,13 @@ def generate_report(failed_logins, ip_counts, output_file, log_file):
 
 
 def main():
-    """Main execution function using command-line arguments."""
+    """
+    Run the log analysis from the command line.
+
+    Steps: parse arguments, validate the input file, read and filter
+    the log, count failures per IP, flag anomalies, and write the report.
+    Exits with code 1 if the file is missing or empty.
+    """
     args = parse_arguments()
 
     log_file    = args.log_file
@@ -234,9 +246,9 @@ def main():
         print("[!] No log data loaded. Exiting.")
         sys.exit(1)
 
-    failed = find_failed_logins(lines)
-    ips    = extract_ip_addresses(failed)
-    ip_counts = Counter(ips)
+    failed = find_failed_logins(lines)          # Keep only failed-login lines
+    ips    = extract_ip_addresses(failed)       # Pull the IPs from those lines
+    ip_counts = Counter(ips)                    # Tally failures per IP
 
     if verbose:
         print(f"\n[*] All failed login entries ({len(failed)}):")
