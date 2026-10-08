@@ -69,14 +69,14 @@ def read_log_file(filepath):
     Returns:
         list: Non-empty lines with whitespace stripped
     """
-    lines = []
+    lines = []                                  # Start empty so errors return [] instead of crashing
     try:
-        with open(filepath, "r") as f:
-            for line in f:
-                clean = line.strip()
-                if clean:
+        with open(filepath, "r") as f:          # 'with' closes the file automatically
+            for line in f:                      # Read one line at a time (memory-safe for big logs)
+                clean = line.strip()            # Remove the trailing newline and spaces
+                if clean:                       # Skip blank lines
                     lines.append(clean)
-    except FileNotFoundError:
+    except FileNotFoundError:                   # Backstop: main() already checks the file exists
         print(f"[!] ERROR: Log file not found: {filepath}")
         print(f"[!] Make sure {filepath} exists in the same folder as this script.")
     except PermissionError:
