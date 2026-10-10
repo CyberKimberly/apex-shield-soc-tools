@@ -101,12 +101,14 @@ Write-Host "[+] Services collected: $serviceCount running."
 
 # --- Section 3: Auto-Start Services That Are Stopped (Security Flag) ---
 Write-Section "AUTO-START SERVICES CURRENTLY STOPPED"
+Write-Host "[*] Checking for auto-start services that are stopped..."
 
+# Auto + Stopped = a service that should be running but isn't
 $stoppedAuto = Get-CimInstance Win32_Service |
     Where-Object {$_.StartMode -eq "Auto" -and $_.State -eq "Stopped"} |
     Sort-Object DisplayName
 
-if ($stoppedAuto) {
+if ($stoppedAuto) {  # True only if at least one stopped service was found
     Add-Content -Path $reportFile -Value "  *** These services are set to auto-start but are stopped: ***"
     foreach ($svc in $stoppedAuto) {
         Add-Content -Path $reportFile -Value "    - $($svc.DisplayName)"
