@@ -12,6 +12,7 @@ failed login attempts, and generates a formatted report.
 - Extracts source IP addresses using regular expressions
 - Counts and ranks IPs by number of failed attempts
 - Flags IPs with 3 or more failures for investigation
+- Applies Z-score statistical analysis (Z > 2.0) to flag IPs whose failure counts are unusually high compared to the rest, catching outliers a fixed threshold might miss
 - Writes a formatted analysis report to `analysis_report.txt`
 - Accepts command-line options for input file, output file, and verbose mode
 - Validates that the log file exists before processing
