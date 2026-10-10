@@ -2,7 +2,7 @@
 # security_snapshot.sh
 # Apex Shield SOC Tools -- Linux Security Snapshot
 # Module 7 Project
-#
+# Author: KC (GitHub: CyberKimberly)
 # Collects: Login history, service status, network connections,
 #           recently modified shell scripts
 # Output: Timestamped .txt file in ~/security_reports/
@@ -41,7 +41,7 @@ echo "[*] Report: $REPORT_FILE"
     echo "  RECENT LOGIN HISTORY (last 10)"
     echo "========================================================"
     echo ""
-    last -n 10 --time-format iso 2>/dev/null
+    last -n 10 --time-format iso 2>/dev/null || last -n 10 2>/dev/null || echo "  (login history unavailable on this system)"
     echo ""
     echo "--- Failed login attempts (last 5) ---"
     lastb -n 5 2>/dev/null || echo "  (lastb requires root or cannot be read)"
@@ -61,9 +61,11 @@ echo "[+] Login history collected."
 
     for service in "${SERVICES[@]}"; do
         if systemctl is-active --quiet "$service"; then
-            STATUS="RUNNING "
+            STATUS="RUNNING      "
+        elif systemctl list-unit-files "${service}.service" --no-legend 2>/dev/null | grep -q .; then
+            STATUS="STOPPED"
         else
-            STATUS="STOPPED "
+            STATUS="NOT INSTALLED"
         fi
         echo "  [$STATUS] $service"
     done
@@ -81,7 +83,7 @@ echo "[+] Service status collected."
     ss -tlnp 2>/dev/null
     echo ""
     echo "--- Established connections ---"
-    ss -tunp 2>/dev/null | grep "ESTAB"
+    ss -tunp 2>/dev/null | grep "ESTAB" || echo "  (no established connections found)"
     echo ""
 } >> "$REPORT_FILE"
 
@@ -92,7 +94,7 @@ echo "[+] Network connections collected."
     echo "  RECENTLY MODIFIED SHELL SCRIPTS (past 7 days)"
     echo "========================================================"
     echo ""
-    RECENT_SCRIPTS=$(find /home /root /tmp -name "*.sh" -newer /etc/passwd \
+    RECENT_SCRIPTS=$(find /home /root /tmp -name "*.sh" -mtime -7 \
         -type f 2>/dev/null)
 
     if [ -z "$RECENT_SCRIPTS" ]; then
