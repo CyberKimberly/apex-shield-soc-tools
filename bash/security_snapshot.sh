@@ -63,7 +63,7 @@ echo "[+] Login history collected."
         if systemctl is-active --quiet "$service"; then
             STATUS="RUNNING      "
         elif systemctl list-unit-files "${service}.service" --no-legend 2>/dev/null | grep -q .; then
-            STATUS="STOPPED"
+            STATUS="STOPPED      "
         else
             STATUS="NOT INSTALLED"
         fi
