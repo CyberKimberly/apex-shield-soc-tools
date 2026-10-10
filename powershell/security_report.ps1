@@ -34,7 +34,9 @@ function Write-Section {
     Add-Content -Path $reportFile -Value ("=" * 55)
 }
 
-# Report header
+# --- Report header ---
+# A here-string (@" ... "@) keeps the multi-line layout exactly as typed.
+# $(...) runs Get-Date inside the string; $env: reads Windows environment variables.
 $header = @"
 =======================================================
   APEX SHIELD SOC -- WINDOWS SECURITY REPORT
@@ -44,6 +46,7 @@ $header = @"
   User      : $env:USERNAME
 =======================================================
 "@
+# Set-Content creates the file; later sections append with Add-Content
 Set-Content -Path $reportFile -Value $header
 Write-Host "[*] Starting security report..."
 Write-Host "[*] Output: $reportFile"
