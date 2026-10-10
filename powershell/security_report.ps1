@@ -84,16 +84,16 @@ Write-Section "RUNNING SERVICES"
 Write-Host "[*] Collecting running services..."
 
 $services = Get-CimInstance Win32_Service |
-    Where-Object {$_.State -eq "Running"} |
+    Where-Object {$_.State -eq "Running"} |         # Keep only services that are running now
     Sort-Object DisplayName |
     Select-Object Name, DisplayName, StartMode, State
 
-$serviceCount = ($services | Measure-Object).Count
+$serviceCount = ($services | Measure-Object).Count  # Measure-Object counts the services
 Add-Content -Path $reportFile -Value "  Total running services: $serviceCount"
 Add-Content -Path $reportFile -Value ""
 
 foreach ($svc in $services) {
-    $line = "  {0,-45} [{1}]" -f $svc.DisplayName, $svc.StartMode
+    $line = "  {0,-45} [{1}]" -f $svc.DisplayName, $svc.StartMode  # {0,-45} pads the name to 45 chars so columns line up
     Add-Content -Path $reportFile -Value $line
 }
 
