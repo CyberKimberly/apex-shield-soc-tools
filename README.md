@@ -76,13 +76,12 @@ Optional flags:
 Run `python3 log_analyzer.py --help` to see all options.
 
 ### PowerShell
-Open PowerShell as Administrator, then:
+Open PowerShell as Administrator, then from the repository root:
 ```powershell
-cd powershell
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\security_report.ps1
+Set-ExecutionPolicy RemoteSigned -Scope Process
+.\powershell\security_report.ps1
 ```
-The execution policy change only applies to the current PowerShell window. The report is saved as `security_report_<timestamp>.txt`.
+The execution policy change only applies to the current PowerShell window. Reports are saved to `C:\SecurityReports\` as `security_report_<timestamp>.txt`, outside the repository on purpose since they contain system details.
 
 ### Bash
 Tested on Kali Linux.
