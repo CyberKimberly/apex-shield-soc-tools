@@ -2,10 +2,15 @@
 # Apex Shield SOC Tools -- Windows Security Snapshot
 # Module 7 Project
 #
-# Collects: Disk space, running services, local user accounts
-# Output: Timestamped .txt file in C:\SecurityReports\
+# Collects disk space, running services, auto-start services that are
+# stopped, and local user accounts into a timestamped text report.
 #
-# Run as Administrator for complete data
+# Usage:  .\security_report.ps1
+#         Run from an elevated PowerShell window (Run as Administrator)
+#         for complete service and user account data.
+#
+# Output: C:\SecurityReports\security_report_YYYY-MM-DD_HH-mm-ss.txt
+#         The folder is created automatically if it doesn't exist.
 
 # --- Configuration ---
 $reportFolder = "C:\SecurityReports"
