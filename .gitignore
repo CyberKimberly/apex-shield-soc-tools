@@ -221,3 +221,5 @@ __marimo__/
 
 # Generated reports (sample_output.txt is the committed example)
 *_report.txt
+
+python/sample_output.txt
