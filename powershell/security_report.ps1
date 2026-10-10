@@ -18,9 +18,11 @@ $timestamp    = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
 $reportFile   = "$reportFolder\security_report_$timestamp.txt"
 
 # Create the output folder if it doesn't exist
-if (-not (Test-Path $reportFolder)) {
-    New-Item -ItemType Directory -Path $reportFolder | Out-Null
+if (-not (Test-Path $reportFolder)) {                        # Only create it if it's missing
+    New-Item -ItemType Directory -Path $reportFolder | Out-Null   # Like mkdir -p.
     Write-Host "[+] Created folder: $reportFolder"
+} else {
+    Write-Host "[*] Using existing folder: $reportFolder"
 }
 
 # Helper function: write a section header to the report
