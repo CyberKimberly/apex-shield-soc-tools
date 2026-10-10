@@ -166,12 +166,13 @@ foreach ($user in $users) {
 
 Write-Host "[+] User accounts collected: $($users.Count) total."   
 
-# --- Report Complete ---
+# --- Report Complete ---  # Footer records when the scan finished; header records when it started
 $footer = @"
 
 ========================================================
   Report complete.
-  File: $reportFile
+  Completed   : $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+  File        : $reportFile
 ========================================================
 "@
 Add-Content -Path $reportFile -Value $footer
