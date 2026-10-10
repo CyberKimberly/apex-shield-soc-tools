@@ -61,14 +61,14 @@ Get-CimInstance Win32_LogicalDisk |
     ForEach-Object {
         $totalGB = [math]::Round($_.Size / 1GB, 1)
         $freeGB  = [math]::Round($_.FreeSpace / 1GB, 1)
-        $usedGB  = $totalGB - $freeGB
+        $usedGB  = [math]::Round($totalGB - $freeGB, 1)   # Round again; subtracting decimals can leave long fractions
         $pctFree = [math]::Round(($_.FreeSpace / $_.Size) * 100, 1)
-
+        # -f fills the {0}..{4} placeholders with the drive letter and sizes
         $line = "  Drive {0} Total={1}GB  Used={2}GB  Free={3}GB  ({4}% free)" -f $_.DeviceID, $totalGB, $usedGB, $freeGB, $pctFree
 
         Add-Content -Path $reportFile -Value $line
 
-          # Alert if less than 15% free space
+        # Alert if less than 15% free space
         if ($pctFree -lt 15) {
             $alert = "  *** WARNING: Drive $($_.DeviceID) is low on space! ***"
             Add-Content -Path $reportFile -Value $alert
