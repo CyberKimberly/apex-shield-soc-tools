@@ -31,8 +31,8 @@ Runs weekdays at 6:00 AM:
 
 ## Known limitations
 
-- The script check uses `-newer /etc/passwd`, which compares against the last account change, not a fixed 7-day window. `-mtime -7` would match the section heading.
-- On newer Kali releases, `last` may return no output if login records use the wtmpdb format. Errors are hidden by `2>/dev/null`.
+- On newer Kali releases, `last` may return no output because login records use the wtmpdb format. The script tries ISO timestamps, then the default format, and if both fail it writes "(login history unavailable on this system)" instead of leaving the section blank.
+- The recent-scripts check uses `-mtime -7`, which relies on file modification times. A script whose timestamp was altered (for example with `touch`) can be missed, so treat this section as a quick triage aid, not proof that nothing changed.
 
 ## Tested on
 
