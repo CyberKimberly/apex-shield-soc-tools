@@ -121,7 +121,7 @@ if ($stoppedAuto) {  # True only if at least one stopped service was found
 
 # --- Section 4: User Accounts ---
 $role = (Get-CimInstance Win32_ComputerSystem).DomainRole
-$isDC = $role -ge 4
+$isDC = $role -ge 4  # DomainRole 4 or 5 = domain controller
 
 if ($isDC) {
     Write-Section "DOMAIN USER ACCOUNTS (Domain Controller)"
@@ -147,7 +147,7 @@ if ($isDC) {
         Select-Object Name, Enabled, LastLogon, PasswordExpires)
 }
 
-$enabledCount  = ($users | Where-Object {$_.Enabled}).Count
+$enabledCount  = ($users | Where-Object {$_.Enabled}).Count   # Count accounts that are enabled vs. disabled
 $disabledCount = ($users | Where-Object {-not $_.Enabled}).Count
 
 Add-Content -Path $reportFile -Value "  Total accounts : $($users.Count)"
@@ -156,7 +156,7 @@ Add-Content -Path $reportFile -Value "  Disabled       : $disabledCount"
 Add-Content -Path $reportFile -Value ""
 
 foreach ($user in $users) {
-    $status     = if ($user.Enabled) { "ENABLED " } else { "DISABLED" }
+    $status     = if ($user.Enabled) { "ENABLED " } else { "DISABLED" }  # Label each account for the report
     $lastLogon  = if ($user.LastLogon) { $user.LastLogon.ToString("yyyy-MM-dd") } else { "Never" }
     $pwdExpires = if ($user.PasswordExpires) { $user.PasswordExpires.ToString("yyyy-MM-dd") } else { "Never" }
 
